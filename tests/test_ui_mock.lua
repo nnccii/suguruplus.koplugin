@@ -128,12 +128,12 @@ local function newPlugin()
     p:init()
     local items = {}
     p:addToMainMenu(items)
-    check(items.suguru and items.suguru.sorting_hint == "tools", "entry in the Tools menu")
+    check(items.suguruplus and items.suguruplus.sorting_hint == "tools", "entry in the Tools menu")
     return p, items
 end
 
 local plugin, items = newPlugin()
-items.suguru.callback()
+items.suguruplus.callback()
 local screen = plugin.screen
 check(screen ~= nil, "screen opened")
 local board = screen.board
@@ -249,13 +249,13 @@ screen:onDigit(board.solution[sel])
 screen:closeScreen()
 check(plugin.screen == nil, "screen closed")
 local plugin2, items2 = newPlugin()
-items2.suguru.callback()
+items2.suguruplus.callback()
 local b2 = plugin2.screen.board
 check(b2.n == 6 and b2.user[sel] == board.solution[sel], "game resumed from save")
 -- corrupted save -> fresh grid
 for _, data in pairs(store) do data.state = { version = 1, n = 6, region = { 1 }, puzzle = {}, solution = {}, user = {} } end
 local plugin3, items3 = newPlugin()
-items3.suguru.callback()
+items3.suguruplus.callback()
 check(plugin3.screen and plugin3.screen.board.topo ~= nil, "corrupted save ignored")
 
 -- language

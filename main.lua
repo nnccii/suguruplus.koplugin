@@ -842,13 +842,13 @@ end
 -- Plugin
 -- ---------------------------------------------------------------------------
 local Suguru = WidgetContainer:extend{
-    name = "suguru",
+    name = "suguruplus",
     is_doc_only = false,
 }
 
 function Suguru:ensureSettings()
     if not self.settings then
-        self.settings = LuaSettings:open(DataStorage:getSettingsDir() .. "/suguru.lua")
+        self.settings = LuaSettings:open(DataStorage:getSettingsDir() .. "/suguruplus.lua")
     end
 end
 
@@ -858,8 +858,8 @@ function Suguru:init()
 end
 
 function Suguru:addToMainMenu(menu_items)
-    menu_items.suguru = {
-        text = "Suguru",
+    menu_items.suguruplus = {
+        text = "Suguru+",
         sorting_hint = "tools",
         callback = function()
             self:showGame()

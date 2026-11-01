@@ -1,4 +1,4 @@
-# Suguru for KOReader
+# Suguru+ for KOReader
 
 A [Suguru](https://en.wikipedia.org/wiki/Suguru) (also known as *Tectonic* or
 *Nanbaburokku*) puzzle game for [KOReader](https://github.com/koreader/koreader),
@@ -30,14 +30,20 @@ designed for e-ink touch screens.
 
 ## Installation
 
-1. Download `suguru.koplugin.zip` from the
+1. Download `suguruplus.koplugin.zip` from the
    [latest release](../../releases/latest) and unzip it.
-2. Copy the `suguru.koplugin` folder into KOReader's `plugins` folder
+2. Copy the `suguruplus.koplugin` folder into KOReader's `plugins` folder
    (`koreader/plugins/` on Kindle and Kobo).
-3. Restart KOReader, then open **Tools → Suguru**.
+3. Restart KOReader, then open **Tools → Suguru+**.
 
 It can also be installed from KOReader with the
 [App Store plugin](https://github.com/omer-faruq/appstore.koplugin).
+
+Suguru+ has its own folder and save file (`settings/suguruplus.lua`), so it can sit
+next to another Suguru plugin without overwriting it.
+
+**Upgrading from a version called "Suguru" (1.1.0 or earlier):** delete the old
+`suguru.koplugin` folder. A game in progress isn't carried over.
 
 ## How puzzles are generated
 
