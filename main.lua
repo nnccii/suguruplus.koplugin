@@ -473,11 +473,27 @@ function BoardWidget:paintTo(bb, x, y)
     fill(x + W - thick, y, thick, W, C_BLACK)
 
     -- digits and notes
-    local pad = thick
-    local inner = cw - 2 * pad
-    for i = 1, board.N do
+    -- Visible interior of a cell, between the strokes actually drawn on each side:
+    -- the outer frame lies fully inside the cell, a centred region border takes half
+    -- of its width on each side, a thin line sits on the right/lower cell's edge.
+    -- Contents are centred in this interior so they look centred on screen.
+    local function interior(i)
         local r, c = board:rc(i)
-        local px, py = cx(c), cy(r)
+        local x0 = x + math.floor((c - 1) * cell)
+        local x1 = (c == n) and (x + W) or (x + math.floor(c * cell))
+        local y0 = y + math.floor((r - 1) * cell)
+        local y1 = (r == n) and (y + W) or (y + math.floor(r * cell))
+        local region = board.region
+        local left = (c == 1) and thick or (region[i - 1] ~= region[i] and thick - half or thin)
+        local right = (c == n) and thick or (region[i + 1] ~= region[i] and half or 0)
+        local top = (r == 1) and thick or (region[i - n] ~= region[i] and thick - half or thin)
+        local bottom = (r == n) and thick or (region[i + n] ~= region[i] and half or 0)
+        return x0 + left, y0 + top, (x1 - x0) - left - right, (y1 - y0) - top - bottom
+    end
+
+    local gap = math.max(2, math.floor(cell / 24))
+    for i = 1, board.N do
+        local ix, iy, iw, ih = interior(i)
         local given = board:isGiven(i)
         local v
         if board.reveal then
@@ -487,42 +503,43 @@ function BoardWidget:paintTo(bb, x, y)
         end
         if v ~= 0 then
             local color = given and C_BLACK or (board.reveal and C_SOLUTION or C_USER)
-            centerText(bb, self.number_face, tostring(v), px + pad, py + pad, inner, inner, color, given)
+            centerText(bb, self.number_face, tostring(v), ix, iy, iw, ih, color, given)
             if not board.reveal and board.conflicts[i] then
                 -- conflict: thick bar under the digit (readable in greyscale)
-                local bw = math.floor(inner * 0.6)
-                bb:paintRect(px + math.floor((cw - bw) / 2), py + cw - pad - math.max(3, math.floor(cell / 14)),
-                    bw, math.max(3, math.floor(cell / 18)), C_BLACK)
+                local bw = math.floor(iw * 0.6)
+                local bh = math.max(3, math.floor(cell / 18))
+                fill(ix + math.floor((iw - bw) / 2), iy + ih - gap - bh, bw, bh, C_BLACK)
             end
             if not board.reveal and board.wrong[i] then
                 -- mistake found by Check: filled top-right corner
                 local s = math.floor(cell / 5)
-                for k = 0, s do
-                    bb:paintRect(px + cw - pad - s + k, py + pad, s - k, 1, C_BLACK)
+                for k = 0, s - 1 do
+                    fill(ix + iw - s + k, iy + k, s - k, 1, C_BLACK)
                 end
             end
         else
             local m = board.notes[i]
             if m ~= 0 then
-                local mw, mh = inner / 3, inner / 2
+                local mw, mh = iw / 3, ih / 2
                 for d = 1, MAXV do
                     if HAS[m][d] then
                         local mc = (d - 1) % 3
                         local mr = math.floor((d - 1) / 3)
                         centerText(bb, self.note_face, tostring(d),
-                            px + pad + math.floor(mc * mw), py + pad + math.floor(mr * mh),
+                            ix + math.floor(mc * mw), iy + math.floor(mr * mh),
                             math.floor(mw), math.floor(mh), C_NOTE, false)
                     end
                 end
             end
         end
         if board.hint_cell == i then
-            -- frame around the hint cell
+            -- frame around the hint cell, with the same gap on all four sides
             local t = math.max(2, math.floor(cell / 20))
-            bb:paintRect(px + pad, py + pad, inner, t, C_BLACK)
-            bb:paintRect(px + pad, py + cw - pad - t, inner, t, C_BLACK)
-            bb:paintRect(px + pad, py + pad, t, inner, C_BLACK)
-            bb:paintRect(px + cw - pad - t, py + pad, t, inner, C_BLACK)
+            local fx, fy, fw, fh = ix + gap, iy + gap, iw - 2 * gap, ih - 2 * gap
+            fill(fx, fy, fw, t, C_BLACK)
+            fill(fx, fy + fh - t, fw, t, C_BLACK)
+            fill(fx, fy, t, fh, C_BLACK)
+            fill(fx + fw - t, fy, t, fh, C_BLACK)
         end
     end
 end
