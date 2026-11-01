@@ -1,6 +1,10 @@
 -- UI test bench: stubs the KOReader modules used by main.lua and plays full games.
--- Usage (from the plugin folder): luajit tests/test_ui_mock.lua .
+-- Usage (from the plugin folder): luajit tests/test_ui_mock.lua . [language]
+-- e.g. "en" (default) or "fr"; with a non-English language, every displayed
+-- string must have a translation.
 package.path = (arg[1] or ".") .. "/?.lua;" .. package.path
+local LANG = arg[2] or "en"
+G_reader_settings = { readSetting = function(_, k) if k == "language" then return LANG end end }
 
 local function class()
     local c = {}
@@ -254,5 +258,19 @@ local plugin3, items3 = newPlugin()
 items3.suguru.callback()
 check(plugin3.screen and plugin3.screen.board.topo ~= nil, "corrupted save ignored")
 
-print(fails == 0 and "UI TESTS PASSED" or ("FAILURES: " .. fails))
+-- language
+local L = require("suguru_i18n")
+check(L.lang == LANG, "language detected: " .. tostring(L.lang))
+local noteText = plugin3.screen.note_button.text
+if LANG == "fr" then
+    check(noteText == "Notes : non", "French button text: " .. tostring(noteText))
+    local missing = {}
+    for s in pairs(L.missing) do missing[#missing + 1] = s end
+    check(#missing == 0, "untranslated strings: " .. table.concat(missing, " | "))
+elseif LANG == "en" then
+    check(noteText == "Notes: off", "English button text: " .. tostring(noteText))
+end
+check(L("RULES_TEXT") ~= "RULES_TEXT", "rules text resolved")
+
+print(fails == 0 and ("UI TESTS PASSED (" .. LANG .. ")") or ("FAILURES: " .. fails))
 os.exit(fails == 0 and 0 or 1)

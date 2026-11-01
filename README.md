@@ -4,7 +4,9 @@ A [Suguru](https://en.wikipedia.org/wiki/Suguru) (also known as *Tectonic* or
 *Nanbaburokku*) puzzle game for [KOReader](https://github.com/koreader/koreader),
 designed for e-ink touch screens.
 
-> The in-game text is in **French**.
+> Available in **English** and **French**: the game follows KOReader's interface language
+> (English is used for any other language). Translations live in `suguru_i18n.lua`;
+> adding a language is a matter of adding one table there.
 
 ## Rules
 
@@ -24,6 +26,7 @@ designed for e-ink touch screens.
   rule finds it (or points at a mistake first).
 - Automatic save and resume.
 - Greyscale-friendly markers (no reliance on colour).
+- English and French interface.
 
 ## Installation
 
@@ -61,7 +64,8 @@ The tests run with the LuaJIT bundled with KOReader, from the plugin folder:
 ```sh
 luajit tests/test_brute.lua .   # solver and rules vs. naive exhaustive search
 luajit tests/test_core.lua .    # generation, uniqueness, solvability, timing
-luajit tests/test_ui_mock.lua . # UI flows with stubbed KOReader modules
+luajit tests/test_ui_mock.lua . en # UI flows with stubbed KOReader modules
+luajit tests/test_ui_mock.lua . fr # same, and fails on any untranslated string
 ```
 
 ## Credits

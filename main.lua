@@ -1,7 +1,7 @@
 -- Suguru for KOReader.
 -- UI adapted from sudoku.koplugin (https://github.com/omer-faruq/sudoku.koplugin, GPL-3.0).
 -- Deduction engine ported from sen-ltd/suguru (MIT) - see THIRD_PARTY_NOTICES.md.
--- User-facing strings are in French.
+-- User-facing strings are English source strings translated by suguru_i18n.lua.
 local Blitbuffer = require("ffi/blitbuffer")
 local ButtonDialog = require("ui/widget/buttondialog")
 local ButtonTable = require("ui/widget/buttontable")
@@ -23,6 +23,7 @@ local VerticalSpan = require("ui/widget/verticalspan")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local T = require("ffi/util").template
 local Core = require("suguru_core")
+local L = require("suguru_i18n")
 
 local Screen = Device.screen
 local MAXV = Core.MAX_REGION
@@ -32,17 +33,11 @@ local SIZES = { 5, 6, 7, 8 }
 local DEFAULT_SIZE = 6
 local DIFFICULTY_ORDER = { "easy", "medium", "hard" }
 local DEFAULT_DIFFICULTY = "medium"
-local DIFFICULTY_LABELS = { easy = "Facile", medium = "Moyen", hard = "Difficile" }
+local DIFFICULTY_LABELS = { easy = "Easy", medium = "Medium", hard = "Hard" }
+local function levelLabel(level)
+    return L(DIFFICULTY_LABELS[level] or "")
+end
 
-local RULES_TEXT = [[Suguru
-
-Le but est de remplir toutes les cases avec des chiffres.
-
-1. Les traits épais découpent la grille en zones.
-2. Une zone de 2 cases contient 1 et 2. Une zone de 3 cases contient 1, 2 et 3. Et ainsi de suite jusqu'à 5.
-3. Deux cases qui se touchent, même par un coin, n'ont jamais le même chiffre.
-
-Les chiffres en gras sont donnés au départ. Il n'y a qu'une solution, et on la trouve sans jamais deviner.]]
 
 -- Colours (with fallbacks in case a shade does not exist in this KOReader version)
 local C_WHITE = Blitbuffer.COLOR_WHITE
@@ -208,10 +203,10 @@ end
 
 local function editable(self)
     if self.reveal then
-        return false, "Masque la solution pour continuer."
+        return false, L("Hide the solution to keep playing.")
     end
     if self:isGiven(self.selected) then
-        return false, "Cette case est donnée."
+        return false, L("This cell is given.")
     end
     return true
 end
@@ -225,7 +220,7 @@ function Board:setValue(v)
     local prev_v, prev_notes = self.user[i], self.notes[i]
     local new_v = v or 0
     if prev_v == new_v and prev_notes == 0 then
-        return v ~= nil, (v == nil) and "Case déjà vide." or nil
+        return v ~= nil, (v == nil) and L("Cell already empty.") or nil
     end
     self:pushUndo{ i = i, value = prev_v, notes = prev_notes }
     self.user[i] = new_v
@@ -243,7 +238,7 @@ function Board:toggleNote(v)
     end
     local i = self.selected
     if self.user[i] ~= 0 then
-        return false, "Efface la case avant d'ajouter des notes."
+        return false, L("Erase the cell before adding notes.")
     end
     local m = self.notes[i]
     self:pushUndo{ i = i, value = self.user[i], notes = m }
@@ -258,7 +253,7 @@ end
 function Board:undo()
     local e = table.remove(self.undo_stack)
     if not e then
-        return false, "Rien à annuler."
+        return false, L("Nothing to undo.")
     end
     self.user[e.i] = e.value
     self.notes[e.i] = e.notes
@@ -304,26 +299,26 @@ end
 -- Hint: point at a mistake first, otherwise the next logical deduction.
 function Board:hint()
     if self.reveal then
-        return nil, "Masque la solution pour continuer."
+        return nil, L("Hide the solution to keep playing.")
     end
     for i = 1, self.N do
         local v = self.user[i]
         if v ~= 0 and v ~= self.solution[i] then
             self.wrong[i] = true
             self.selected = i
-            return i, "Cette case est fausse : efface-la."
+            return i, L("This cell is wrong: erase it.")
         end
     end
     local cell, digit, rules = Core.nextDeduction(self.topo, self:workingGrid())
     if not cell then
-        return nil, "Aucune déduction simple trouvée."
+        return nil, L("No simple deduction found.")
     end
     self.selected = cell
     self.hint_cell = cell
     local how = (rules == "singles")
-        and "car c'est le seul chiffre possible dans cette case, ou la seule place pour ce chiffre dans sa zone"
-        or "on le trouve en essayant toutes les façons de remplir les zones voisines"
-    return cell, T("Indice : un %1 va ici, %2.", digit, how)
+        and L("because it is the only digit possible in this cell, or the only place for this digit in its block")
+        or L("found by trying every way to fill the neighbouring blocks")
+    return cell, T(L("Hint: a %1 goes here, %2."), digit, how)
 end
 
 -- ---------------------------------------------------------------------------
@@ -575,10 +570,10 @@ function GameScreen:buildLayout()
         shrink_unneeded_width = true,
         buttons = {
             {
-                { text = "Nouvelle partie", callback = function() self:openNewGameMenu() end },
-                { text = "Règles", callback = function() self:showRules() end },
-                { id = "reveal", text = "Solution", callback = function() self:toggleReveal() end },
-                { text = "Fermer", callback = function() self:closeScreen() end },
+                { text = L("New game"), callback = function() self:openNewGameMenu() end },
+                { text = L("Rules"), callback = function() self:showRules() end },
+                { id = "reveal", text = L("Solution"), callback = function() self:toggleReveal() end },
+                { text = L("Close"), callback = function() self:closeScreen() end },
             },
         },
     }
@@ -595,10 +590,10 @@ function GameScreen:buildLayout()
             digits,
             {
                 { id = "note", text = self:noteText(), callback = function() self:toggleNoteMode() end },
-                { text = "Effacer", callback = function() self:onErase() end },
-                { text = "Indice", callback = function() self:onHint() end },
-                { text = "Vérifier", callback = function() self:onCheck() end },
-                { id = "undo", text = "Annuler", callback = function() self:onUndo() end },
+                { text = L("Erase"), callback = function() self:onErase() end },
+                { text = L("Hint"), callback = function() self:onHint() end },
+                { text = L("Check"), callback = function() self:onCheck() end },
+                { id = "undo", text = L("Undo"), callback = function() self:onUndo() end },
             },
         },
     }
@@ -627,7 +622,7 @@ function GameScreen:buildLayout()
 end
 
 function GameScreen:noteText()
-    return self.note_mode and "Notes : oui" or "Notes : non"
+    return self.note_mode and L("Notes: on") or L("Notes: off")
 end
 
 function GameScreen:updateNoteButton()
@@ -644,7 +639,7 @@ end
 
 function GameScreen:updateRevealButton()
     if self.reveal_button then
-        self.reveal_button:setText(self.board.reveal and "Masquer" or "Solution", self.reveal_button.width)
+        self.reveal_button:setText(self.board.reveal and L("Hide") or L("Solution"), self.reveal_button.width)
     end
 end
 
@@ -653,13 +648,13 @@ function GameScreen:updateStatus(message)
     local text = message
     if not text then
         if b.reveal then
-            text = "Solution affichée : la saisie est bloquée."
+            text = L("Solution shown: input is locked.")
         elseif b:isSolved() then
-            text = "Bravo, grille terminée !"
+            text = L("Well done, puzzle solved!")
         else
-            text = T("%1×%2 %3  ·  cases vides : %4%5", b.n, b.n,
-                DIFFICULTY_LABELS[b.difficulty] or "", b:remaining(),
-                self.note_mode and "  ·  mode notes" or "")
+            text = T(L("%1×%2 %3  ·  empty cells: %4%5"), b.n, b.n,
+                levelLabel(b.difficulty), b:remaining(),
+                self.note_mode and L("  ·  notes mode") or "")
         end
     end
     self.status_text:setText(text)
@@ -696,7 +691,7 @@ function GameScreen:onDigit(d)
     end
     self:afterChange()
     if not self.note_mode and self.board:isSolved() then
-        UIManager:show(InfoMessage:new{ text = "Bravo, grille terminée !", timeout = 4 })
+        UIManager:show(InfoMessage:new{ text = L("Well done, puzzle solved!"), timeout = 4 })
     end
 end
 
@@ -715,7 +710,7 @@ function GameScreen:onUndo()
         self:updateStatus(err)
         return
     end
-    self:afterChange("Coup annulé.")
+    self:afterChange(L("Move undone."))
 end
 
 function GameScreen:onCheck()
@@ -724,11 +719,11 @@ function GameScreen:onCheck()
     end
     local any = self.board:markWrong()
     if self.board:isSolved() then
-        self:afterChange("Tout est juste !")
+        self:afterChange(L("Everything is correct!"))
     elseif any then
-        self:afterChange("Les erreurs sont marquées d'un coin noir.")
+        self:afterChange(L("Mistakes are marked with a black corner."))
     else
-        self:afterChange("Aucune erreur pour l'instant, continue !")
+        self:afterChange(L("No mistakes so far, keep going!"))
     end
 end
 
@@ -747,7 +742,7 @@ function GameScreen:toggleReveal()
 end
 
 function GameScreen:showRules()
-    UIManager:show(InfoMessage:new{ text = RULES_TEXT })
+    UIManager:show(InfoMessage:new{ text = L("RULES_TEXT") })
 end
 
 function GameScreen:openNewGameMenu()
@@ -763,11 +758,11 @@ function GameScreen:openNewGameMenu()
         }
     end
     dialog = ButtonDialog:new{
-        title = "Nouvelle partie : taille de la grille",
+        title = L("New game: grid size"),
         title_align = "center",
         buttons = {
             size_row,
-            { { text = "Annuler", callback = function() UIManager:close(dialog) end } },
+            { { text = L("Cancel"), callback = function() UIManager:close(dialog) end } },
         },
     }
     UIManager:show(dialog)
@@ -778,7 +773,7 @@ function GameScreen:openDifficultyMenu(n)
     local row = {}
     for _, level in ipairs(DIFFICULTY_ORDER) do
         row[#row + 1] = {
-            text = DIFFICULTY_LABELS[level],
+            text = levelLabel(level),
             callback = function()
                 UIManager:close(dialog)
                 self:startNewGame(n, level)
@@ -786,31 +781,31 @@ function GameScreen:openDifficultyMenu(n)
         }
     end
     dialog = ButtonDialog:new{
-        title = T("%1×%2 : difficulté", n, n),
+        title = T(L("%1×%2: difficulty"), n, n),
         title_align = "center",
         buttons = {
             row,
-            { { text = "Annuler", callback = function() UIManager:close(dialog) end } },
+            { { text = L("Cancel"), callback = function() UIManager:close(dialog) end } },
         },
     }
     UIManager:show(dialog)
 end
 
 function GameScreen:startNewGame(n, level)
-    local wait = InfoMessage:new{ text = "Génération de la grille…" }
+    local wait = InfoMessage:new{ text = L("Generating the puzzle…") }
     UIManager:show(wait)
     UIManager:forceRePaint()
     local ok = self.board:generate(n, level)
     UIManager:close(wait)
     if not ok then
-        UIManager:show(InfoMessage:new{ text = "Impossible de générer une grille, réessaie." })
+        UIManager:show(InfoMessage:new{ text = L("Could not generate a puzzle, please try again.") })
         return
     end
     self.plugin:rememberChoice(n, level)
     self.note_mode = false
     self:updateNoteButton()
     self:updateRevealButton()
-    self:afterChange(T("Nouvelle grille %1×%2 %3.", n, n, DIFFICULTY_LABELS[level]))
+    self:afterChange(T(L("New %1×%2 puzzle, %3."), n, n, levelLabel(level)))
     UIManager:setDirty(nil, "full")
 end
 
@@ -894,7 +889,7 @@ function Suguru:showGame()
     end
     local board = self:getBoard()
     if not board then
-        UIManager:show(InfoMessage:new{ text = "Impossible de générer une grille." })
+        UIManager:show(InfoMessage:new{ text = L("Could not generate a puzzle.") })
         return
     end
     self.screen = GameScreen:new{ board = board, plugin = self }

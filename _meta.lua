@@ -1,6 +1,6 @@
 return {
     name = "suguru",
     fullname = "Suguru",
-    description = [[Suguru (Tectonic) : grilles générées de 5×5 à 8×8, trois niveaux, toujours résolubles par déduction. Notes, annulation, indices logiques, sauvegarde automatique.]],
-    version = "1.0.0",
+    description = [[Suguru (Tectonic) puzzles generated on the device, 5×5 to 8×8, three levels, always solvable by deduction. Notes, undo, logical hints, automatic save. English and French.]],
+    version = "1.1.0",
 }
